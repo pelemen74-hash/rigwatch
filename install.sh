@@ -5,6 +5,7 @@
 #   sudo ./install.sh --fan-control       + GPU fan curve (amdgpu)
 #   sudo ./install.sh --power-off         + "shut down" button in the dashboard
 #   sudo ./install.sh --wol enp3s0        + keep Wake-on-LAN enabled on that NIC
+#   sudo ./install.sh --cpu-power         + let the dashboard read CPU watts (RAPL)
 #   sudo ./install.sh --port 8080         listen on another port
 #
 # Run it again with other options at any time; ./uninstall.sh removes everything.
@@ -12,13 +13,14 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 UNITS=/etc/systemd/system
-FAN=0 POWER=0 WOL="" PORT=""
+FAN=0 POWER=0 CPU_POWER=0 WOL="" PORT=""
 
-usage() { sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 while [ $# -gt 0 ]; do
   case "$1" in
     --fan-control) FAN=1 ;;
     --power-off) POWER=1 ;;
+    --cpu-power) CPU_POWER=1 ;;
     --wol) WOL="${2:?--wol needs an interface name, see: ip link}"; shift ;;
     --port) PORT="${2:?--port needs a number}"; shift ;;
     -h|--help) usage ;;
@@ -155,6 +157,20 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF
   ENABLE+=(rigwatch-wol.service)
+fi
+
+if [ "$CPU_POWER" = 1 ]; then
+  # The kernel keeps the CPU energy counter root-only; hand it to the
+  # dashboard user alone, now and after every boot
+  RAPL=/sys/devices/virtual/powercap/intel-rapl/intel-rapl:0/energy_uj
+  if [ -e "$RAPL" ]; then
+    cat > /etc/udev/rules.d/99-rigwatch-rapl.rules <<EOF
+SUBSYSTEM=="powercap", KERNEL=="intel-rapl:0", ACTION=="add|change", RUN+="/bin/sh -c 'chown $OWNER:$GROUP $RAPL && chmod 0400 $RAPL'"
+EOF
+    chown "$OWNER:$GROUP" "$RAPL" && chmod 0400 "$RAPL"
+  else
+    echo "Note: no RAPL energy counter on this machine; CPU power stays unavailable."
+  fi
 fi
 
 systemctl daemon-reload

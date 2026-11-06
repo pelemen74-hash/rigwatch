@@ -56,10 +56,11 @@ run the installer again at any time to change them:
 | `--fan-control` | Fan curve for all `amdgpu` cards (runs as root, see below) |
 | `--power-off` | Shutdown button in the dashboard |
 | `--wol enp3s0` | Keep Wake-on-LAN enabled on that network card (`ip link` lists them) |
+| `--cpu-power` | Show CPU watts: lets only the RigWatch user read the CPU energy counter (RAPL), which Linux keeps root-only |
 | `--port 8080` | Listen on another port |
 
 ```bash
-sudo ./install.sh --fan-control --power-off --wol enp3s0
+sudo ./install.sh --fan-control --power-off --cpu-power --wol enp3s0
 ```
 
 `sudo ./uninstall.sh` removes the services. Your `config.json` and history in `data/` stay.

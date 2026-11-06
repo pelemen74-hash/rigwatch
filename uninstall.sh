@@ -10,5 +10,6 @@ for unit in "${UNITS[@]}"; do
   systemctl disable --now "$unit" 2>/dev/null || true
   rm -f "/etc/systemd/system/$unit"
 done
+rm -f /etc/udev/rules.d/99-rigwatch-rapl.rules   # counter permissions reset at the next boot
 systemctl daemon-reload
 echo "RigWatch services removed. Delete this directory to remove RigWatch completely."
