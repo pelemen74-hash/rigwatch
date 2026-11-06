@@ -1,0 +1,22 @@
+{
+  "host": "0.0.0.0",
+  "port": 3000,
+
+  "power_off": {
+    "enabled": false,
+    "token": ""
+  },
+
+  "rig": {
+    "psu_name": "",
+    "gpu_brand": "",
+    "board_label": "",
+    "radiator_label": ""
+  },
+
+  "fan_curve": {
+    "start": 50,
+    "release": 42,
+    "points": [[50, 35], [65, 50], [75, 70], [82, 85], [88, 100]]
+  }
+}

@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>RigWatch</title>
+  <meta name="theme-color" content="#080b0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RigWatch">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/favicon.png">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-block">
+      <div class="brand-mark">RW</div>
+      <img class="brand-logo" src="/logo.png" alt="" onerror="this.remove()">
+      <div>
+        <div class="eyebrow">HARDWARE TELEMETRY</div>
+        <h1>RIG<span>WATCH</span></h1>
+      </div>
+    </div>
+    <div class="host-block">
+      <div class="status-line"><span class="live-dot"></span><span id="connectionState">VERBINDE</span></div>
+      <div class="host-line"><strong id="hostname">--</strong><span id="clock">--:--</span></div>
+    </div>
+  </header>
+
+  <main>
+    <section id="alertStrip" class="alert-strip hidden" role="alert"></section>
+
+    <section class="hero-grid">
+      <article class="gauge-card">
+        <div class="card-index">01 / CPU</div>
+        <div class="gauge" id="cpuGauge"><div><strong id="cpuTemp">--</strong><span>°C</span></div></div>
+        <div id="cpuCcdLegend" class="gpu-temp-legend cpu-ccd-legend hidden"></div>
+        <div class="gauge-meta"><span id="cpuModel" title="CPU">PACKAGE</span><b id="cpuState" class="state">WARTET</b></div>
+      </article>
+      <article class="gauge-card">
+        <div class="card-index">02 / GPU EDGE</div>
+        <div class="gauge multi" id="gpuGauge"><svg id="gpuEdgeRings" class="gauge-rings" viewBox="0 0 100 100"></svg><div><strong id="gpuTemp">--</strong><span>°C</span></div></div>
+        <div id="gpuEdgeLegend" class="gpu-temp-legend"></div>
+        <div class="gauge-meta"><span id="gpuEdgeHotLabel">EDGE</span><b id="gpuState" class="state">WARTET</b></div>
+      </article>
+      <article class="gauge-card">
+        <div class="card-index">03 / GPU HOTSPOT</div>
+        <div class="gauge multi" id="hotspotGauge"><svg id="gpuHotspotRings" class="gauge-rings" viewBox="0 0 100 100"></svg><div><strong id="hotspotTemp">--</strong><span>°C</span></div></div>
+        <div id="gpuHotspotLegend" class="gpu-temp-legend"></div>
+        <div class="gauge-meta"><span id="gpuHotspotHotLabel">JUNCTION</span><b id="hotspotState" class="state">WARTET</b></div>
+      </article>
+      <article class="load-card">
+        <div class="card-index">04 / LIVE LOAD</div>
+        <div class="load-row"><span>CPU</span><div class="bar"><i id="cpuLoadBar"></i></div><strong id="cpuLoad">--%</strong></div>
+        <div class="dwarf-yard" title="Ein Zwerg pro aktivem CPU-Thread"><div id="dwarfCrew" class="dwarf-crew" aria-hidden="true"></div><div id="dwarfStage" class="dwarf-stage hidden"><canvas id="dwarfScene"></canvas></div><small><span id="dwarfCaption">Zwerge wachen auf …</span><span id="dwarfWood"></span></small></div>
+        <div id="gpuLoadRows" class="gpu-load-rows"><div class="load-row"><span>GPU</span><div class="bar"><i></i></div><strong>--%</strong></div></div>
+        <div class="load-row"><span>RAM</span><div class="bar"><i id="ramLoadBar"></i></div><strong id="ramLoad">--%</strong></div>
+        <div class="power-stack">
+          <div class="power-readout"><span>CPU</span><strong id="cpuPower">-- W</strong></div>
+          <div class="power-readout"><span>GPU GESAMT</span><strong id="gpuPower">-- W</strong><small id="gpuPowerCap">/ -- W</small></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="chart-section panel">
+      <div class="section-head">
+        <div><span class="section-number">A</span><h2>Verlauf</h2></div>
+        <div class="range-switch" id="rangeSwitch" role="group" aria-label="Zeitraum">
+          <button type="button" data-minutes="15">15M</button>
+          <button type="button" data-minutes="60" class="active">1H</button>
+          <button type="button" data-minutes="360">6H</button>
+          <button type="button" data-minutes="1440">24H</button>
+          <button type="button" data-minutes="10080">7T</button>
+        </div>
+      </div>
+      <div class="view-switch" id="viewSwitch" role="tablist" aria-label="Diagramm">
+        <button type="button" data-view="temp" class="active">TEMPERATUR</button>
+        <button type="button" data-view="gpus">JE GPU</button>
+        <button type="button" data-view="load">LAST</button>
+        <button type="button" data-view="power">LEISTUNG</button>
+      </div>
+      <div class="legend" id="chartLegend"></div>
+      <div class="chart-wrap" id="chartWrap">
+        <canvas id="temperatureChart"></canvas>
+        <div id="chartTip" class="chart-tip hidden"></div>
+      </div>
+      <p class="chart-hint">Zum Ablesen auf das Diagramm tippen oder darüberfahren · <span id="chartHint"></span></p>
+    </section>
+
+    <section class="panel rig-panel">
+      <div class="section-head">
+        <div><span class="section-number">R</span><h2>Rig live</h2></div>
+        <div class="range-switch" id="rigViews" role="group" aria-label="Ansicht">
+          <button type="button" data-view="front" class="active">VORNE</button>
+          <button type="button" data-view="fans">LÜFTER</button>
+          <button type="button" data-view="top">OBEN</button>
+        </div>
+      </div>
+      <div class="rig-stage" id="rigStage">
+        <canvas id="rigCanvas" aria-label="3D-Modell des Rigs"></canvas>
+        <div id="rigLabels" class="rig-labels" aria-hidden="true"></div>
+        <div id="rigFallback" class="rig-fallback">3D-Ansicht wird geladen …</div>
+      </div>
+      <p class="chart-hint">Seitlich wischen zum Drehen · GPU-Lüfter drehen mit 1/10 der echten Drehzahl · Glühen = Hotspot-Temperatur</p>
+    </section>
+
+    <section class="panel gpu-panel">
+      <div class="section-head"><div><span class="section-number">B</span><h2>Grafikkarten</h2></div><span id="gpuCount" class="micro-label">0 ERKANNT</span></div>
+      <div id="gpuList" class="gpu-list"><div class="empty">Warte auf GPU-Daten</div></div>
+    </section>
+
+    <section class="panel system-panel">
+      <div class="section-head"><div><span class="section-number">C</span><h2>System</h2></div><span id="kernel" class="micro-label">Kernel --</span></div>
+      <div class="stat-grid">
+        <div class="stat"><span>RAM</span><strong id="memoryUsed">--</strong><small id="memoryDetail">--</small></div>
+        <div class="stat"><span>DISK /</span><strong id="diskUsed">--</strong><small id="diskDetail">--</small></div>
+        <div class="stat"><span>LOAD 1/5/15</span><strong id="loadAverage">--</strong><small id="coreCount">-- Threads</small></div>
+        <div class="stat"><span>CPU-TAKT</span><strong id="cpuClock">--</strong><small id="uptime">Uptime --</small></div>
+        <div class="stat"><span>NETZ ↓</span><strong id="networkDown">--</strong><small id="networkInterfaces">--</small></div>
+        <div class="stat"><span>NETZ ↑</span><strong id="networkUp">--</strong><small>Momentan</small></div>
+      </div>
+    </section>
+
+    <section class="split-grid">
+      <article class="panel">
+        <div class="section-head"><div><span class="section-number">D</span><h2>Temperatursensoren</h2></div><span class="micro-label">LIVE</span></div>
+        <div id="sensorList" class="sensor-list"><div class="empty">Warte auf Sensordaten</div></div>
+      </article>
+      <article class="panel">
+        <div class="section-head"><div><span class="section-number">E</span><h2>Aktive Prozesse</h2></div><span class="micro-label">TOP CPU</span></div>
+        <div id="processList" class="table-list"><div class="empty">Warte auf Prozessdaten</div></div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="section-head"><div><span class="section-number">F</span><h2>Laufwerke</h2></div><span id="storageCount" class="micro-label">0 ERKANNT</span></div>
+      <div id="storageList" class="storage-list"><div class="empty">Warte auf Laufwerksdaten</div></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head"><div><span class="section-number">G</span><h2>Docker-Container</h2></div><span id="containerCount" class="micro-label">0 AKTIV</span></div>
+      <div id="containerList" class="container-list"><div class="empty">Keine aktiven Container</div></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head"><div><span class="section-number">I</span><h2>Energie</h2></div><span class="micro-label">CPU + GPU · OHNE NETZTEIL</span></div>
+      <div class="energy-grid">
+        <div class="stat"><span>JETZT</span><strong id="energyNow">-- W</strong><small id="energyNowDetail">CPU -- · GPU --</small></div>
+        <div class="stat"><span>HEUTE</span><strong id="energyToday">-- kWh</strong><small id="energyTodayCost">--</small></div>
+        <div class="stat"><span>LETZTE 24 H</span><strong id="energyDay">-- kWh</strong><small id="energyDayCost">--</small></div>
+        <div class="stat"><span>LETZTE 7 TAGE</span><strong id="energyWeek">-- kWh</strong><small id="energyWeekCost">--</small></div>
+      </div>
+      <label class="price-field">Strompreis <input id="energyPrice" type="number" inputmode="decimal" min="0" max="5" step="0.01" value="0.30"> €/kWh</label>
+      <p class="chart-hint">Gemessen werden CPU-Package und GPU-Boardleistung. Mainboard, Laufwerke, Lüfter und Netzteilverluste fehlen – an der Steckdose liegt der Verbrauch etwa 15–25 % höher.</p>
+    </section>
+
+    <section id="powerPanel" class="panel danger-panel hidden">
+      <div class="section-head"><div><span class="section-number">H</span><h2>Steuerung</h2></div><span class="micro-label">MIT BESTÄTIGUNG</span></div>
+      <div class="danger-row">
+        <p>Fährt den Rig kontrolliert herunter. Laufende Berechnungen werden beendet.</p>
+        <button id="powerButton" class="power-button" type="button">SICHER HERUNTERFAHREN</button>
+      </div>
+    </section>
+  </main>
+
+  <footer><span>RIGWATCH / LOCAL TELEMETRY</span><span>Abtastung 2 s · Verlauf 7 Tage</span><span id="lastUpdate">Noch keine Daten</span></footer>
+
+  <dialog id="powerDialog" class="power-dialog">
+    <form method="dialog" id="powerForm">
+      <span class="dialog-kicker">SYSTEM POWER</span>
+      <h2>Rig sicher herunterfahren?</h2>
+      <p>Das System wird kontrolliert heruntergefahren. Laufende Prozesse und Berechnungen werden beendet.</p>
+      <input type="text" name="username" autocomplete="username" value="rigwatch" hidden><label id="powerTokenField" class="price-field hidden">Passwort <input id="powerToken" type="password" autocomplete="current-password"></label>
+      <p id="powerError" class="power-error hidden" role="alert"></p>
+      <div class="dialog-actions">
+        <button id="powerCancel" type="button" class="dialog-cancel">ABBRECHEN</button>
+        <button id="powerConfirm" type="submit" class="dialog-confirm">JA, HERUNTERFAHREN</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="/app.js"></script>
+  <script type="module" src="/dwarves.js"></script>
+  <script type="module" src="/rig3d.js"></script>
+</body>
+</html>

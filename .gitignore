@@ -1,0 +1,5 @@
+# local settings and history, never committed
+config.json
+data/
+__pycache__/
+*.pyc

@@ -1,0 +1,12 @@
+{
+  "name": "RigWatch",
+  "short_name": "RigWatch",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080b0f",
+  "theme_color": "#080b0f",
+  "icons": [
+    {"src": "/favicon.png", "sizes": "180x180", "type": "image/png"},
+    {"src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml"}
+  ]
+}
