@@ -1,34 +1,47 @@
 # RigWatch
 
-A self-hosted hardware dashboard for multi-GPU Linux rigs (AI, rendering, mining),
+**A self-hosted hardware dashboard for multi-GPU Linux rigs** (AI, rendering, mining),
 made for the phone in your pocket as much as for the desktop.
+
+![RigWatch on desktop and phone](docs/banner.png)
+
+## Your rig, live in 3D
+
+The fans spin with the RPM the cards report, the cards glow amber and then red as
+their hotspot heats up, and every part carries a live tag. Swipe to turn it around.
+The cards are built from what RigWatch detects, so one card or eight both work.
+
+![The 3D rig turning, fans spinning](docs/rig3d.gif)
+
+## A dwarf for every busy CPU thread
+
+Each thread above 20 % load gets a dwarf chopping wood, as fast as the thread works.
+They sweat above 70 %, turn red above 90 %, and the wood pile grows with the energy
+your rig used today. When nothing runs, one of them lies down for a nap.
+
+![The dwarf crew chopping wood](docs/dwarves.gif)
+
+![Working crew and the napping dwarf](docs/dwarves.png)
+
+## Everything else you need to keep an eye on
 
 - **Live telemetry** every 2 seconds: CPU temperature per chiplet, load per thread,
   RAM, disks, network, Docker containers, top processes
 - **Every AMD GPU**: edge / hotspot / VRAM temperatures, load, power, fan speed,
   VRAM use and the PCIe link the card actually got
-- **Fan curve that works**: RX 6000-series cards idle with their fans off and the
+- **A fan curve that works**: RX 6000-series cards idle with their fans off and the
   firmware can be slow to react under load. The optional fan control takes over
-  from 50 °C and gives the cards back to the firmware when they cool down
+  from 50 °C and hands the cards back to the firmware when they cool down
 - **Energy and cost**: today, last 24 h and last 7 days at your price per kWh
 - **History**: 7 days in SQLite, charts for temperatures, per-GPU hotspot, load and power
-- **Your rig in 3D**: fans spin with the measured RPM, cards glow with their hotspot temperature
-- **A dwarf for every busy CPU thread**, chopping wood as fast as the thread works.
-  They sweat above 70 %, turn red above 90 %, and the wood pile grows with today's
-  energy use. When nothing runs, one of them takes a nap.
+- **Alerts** for hot CPUs and GPUs, full disks and stalled fans, also in the browser tab
 - Optional **shutdown button** and **Wake-on-LAN**
 - No build step and nothing to `pip install`: Python 3 standard library on the
   server, plain HTML/CSS/JS in the browser, Three.js bundled. Nothing leaves your network.
 
-![Dashboard](docs/dashboard.png)
+![GPU cards with their live fans](docs/gpus.png)
 
-| Your rig in 3D | Phone |
-| --- | --- |
-| ![3D rig](docs/rig3d.png) ![The dwarf crew](docs/dwarves.png) | ![Phone](docs/phone.png) |
-
-![GPU cards](docs/gpus.png)
-
-> The screenshots show demo values. The dashboard is currently in German.
+> The pictures show demo values. The dashboard is currently in German.
 
 ## Requirements
 
