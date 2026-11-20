@@ -1,60 +1,43 @@
-# Master-Prompt
+# Prompt: Claude schreibt das Skript-JSON
 
-## 1. Original aus dem Video (vervollständigt)
+Diesen Text in einen neuen Claude-Chat einfügen, zusammen mit dem Inhalt
+von `renderer/story-01-cant-lie.json` als Beispiel.
 
-Der sichtbare Teil im TikTok endet bei "and a twist". Der Rest ist so ergänzt,
-dass der Prompt vollständig und direkt nutzbar ist.
+```
+Du schreibst Skripte für 9:16 YouTube Shorts im Stil der
+"In this world..."-Roblox-Stories. Ausgabe ist ausschließlich ein JSON
+im Format des angehängten Beispiels.
+
+Regeln:
+- Story: eine Welt mit einer seltsamen Regel, eine Hauptfigur, die unter
+  der Regel leidet, und ein Twist in den letzten 5 Sekunden, der die Regel
+  in etwas Gutes verwandelt.
+- 16 bis 20 Szenen, je 2 bis 3 Sekunden, insgesamt 45 bis 55 Sekunden.
+- Pro Szene eine Caption mit maximal 3 Wörtern pro Zeile, maximal 2 Zeilen,
+  in GROSSBUCHSTABEN. Die erste Caption beginnt mit "IN THIS WORLD".
+- Erlaubte Werte: env = park, street, school, room, sunset, night;
+  cam = wide, medium, close, low, high, side;
+  pose = idle, walk, run, wave, shock, sad, point, cross, cheer, sit, think;
+  expr = neutral, happy, sad, shock, angry, smirk.
+- Schnittrhythmus abwechseln: nach jeder wide- oder medium-Einstellung eine
+  close-Einstellung mit "focus" auf die sprechende Figur.
+- Bei Schock oder Wendepunkt "shake": true setzen.
+- Die Twist-Caption bekommt "capColor": "#ffe066".
+- Letzte Szene: alle Figuren, pose cheer oder wave, Caption "FOLLOW FOR\nPART 2".
+- 2 bis 4 Figuren mit klar unterschiedlichen Farben für shirt, pants, hair.
+
+Story-Regel: [REGEL AUS IDEEN.md]
+Twist: [TWIST AUS IDEEN.md]
+```
+
+## Original-Prompt aus dem TikTok (für OpenArt, zur Referenz)
 
 ```
 Use OpenArt to make a vertical (9:16) YouTube Short in the style of an
 "In this world..." Roblox story.
-
 Format: a short, dramatic story set in a world with one strange rule, told
 with Roblox-style blocky characters (square heads, simple faces, big
 expressive eyes and mouths, smooth plastic look) in cozy, colorful 3D scenes.
 Big, bold captions on screen, one or two words at a time. Fast pacing, a cut
-every 2 to 3 seconds, around 45 to 60 seconds total, and a twist ending in
-the last 5 seconds that recontextualizes the rule.
-
-Steps:
-1. Write the script first: the rule (one sentence, starts with "In this
-   world..."), 15 to 20 scenes of 2 to 3 seconds, one caption per scene
-   (max 3 words), and the twist.
-2. For every scene, generate one 9:16 image with OpenArt using a consistent
-   character sheet: same main character, same outfit, same color palette.
-3. Then generate short video clips (2 to 3 s) from those images with OpenArt.
-4. Return: the full script as a table (scene, caption, image prompt, clip
-   prompt), the generated files, and a suggested title plus 3 hashtags.
-
-Style reference: match the attached screenshot.
+every 2 to 3 seconds, around 45 to 60 seconds total, and a twist ending.
 ```
-
-## 2. Kurzversion für den Alltag
-
-```
-Mach mir mit OpenArt einen 9:16 YouTube Short, 45–60 s, Roblox-Look
-(blockige Figuren, große Augen, Plastik-Optik, bunte 3D-Szenen).
-Story: "In this world, [REGEL]." Twist am Ende: [TWIST].
-15–20 Szenen à 2–3 s, pro Szene eine fette Caption mit max. 3 Wörtern.
-Erst Skript als Tabelle, dann Bilder, dann Clips. Figur bleibt in allen
-Szenen gleich.
-```
-
-## 3. Deutsche Variante
-
-Shorts auf Deutsch haben weniger Konkurrenz, aber auch weniger Reichweite
-und geringeren RPM. Zum Testen beide Sprachen fahren.
-
-```
-Erstelle mit OpenArt einen vertikalen (9:16) YouTube Short im Stil einer
-"In dieser Welt..."-Roblox-Story. [...] Captions auf Deutsch, ein bis zwei
-Wörter pro Einblendung.
-```
-
-## 4. Tipps für konsistente Ergebnisse
-
-- Immer das gleiche Referenzbild anhängen, sonst wechselt der Look.
-- Hauptfigur im Prompt fest beschreiben (Haarfarbe, Outfit, ein Merkmal).
-- Erst das Skript freigeben lassen, dann generieren. Spart Credits.
-- Bei OpenArt zuerst Bilder, dann daraus Clips: billiger und konsistenter
-  als direkt Text-zu-Video.

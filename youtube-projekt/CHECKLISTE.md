@@ -2,19 +2,18 @@
 
 ## Vorbereitung
 - [ ] Idee aus `IDEEN.md` gewählt oder neue Regel + Twist notiert
-- [ ] Referenz-Screenshot für den Look bereit
-- [ ] OpenArt-Credits reichen für ca. 20 Bilder + 20 Clips
+- [ ] Skript-JSON geschrieben (Claude-Prompt aus `PROMPT.md`)
 
-## In Claude
-- [ ] Neuer Chat, Referenzbild eingefügt, Master-Prompt aus `PROMPT.md` eingesetzt
-- [ ] Skript-Tabelle geprüft: Regel klar, Twist in den letzten 5 s, Captions max. 3 Wörter
-- [ ] Bilder generiert, Figur in allen Szenen gleich
-- [ ] Clips generiert (2–3 s pro Szene)
+## Rendern
+- [ ] Vorschau: `node render.js story.json out.mp4 --fps 10 --scale 0.5`
+- [ ] Skript geprüft: Regel klar, Twist in den letzten 5 s, Captions max. 3 Wörter
+- [ ] Voller Render: `node render.js story.json out.mp4`
+- [ ] Video angeschaut, keine abgeschnittenen Köpfe, Captions lesbar
 
 ## Schnitt
-- [ ] Clips in Reihenfolge, Schnitt alle 2–3 s
-- [ ] Captions groß, mittig, fett, hoher Kontrast
-- [ ] Hintergrundmusik + Voice-over (optional)
+- [ ] MP4 in CapCut oder DaVinci Resolve geladen
+- [ ] Voice-over aufgenommen oder per TTS erzeugt
+- [ ] Hintergrundmusik (lizenzfrei, z. B. YouTube Audio Library)
 - [ ] Gesamtlänge 45–60 s, 9:16, 1080×1920
 
 ## Upload

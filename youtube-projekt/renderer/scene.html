@@ -1,0 +1,244 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>story renderer</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+</head><body>
+<canvas id="out"></canvas>
+<script type="module">
+import * as THREE from './three.module.min.js';
+
+const W = window.RW_W || 1080, H = window.RW_H || 1920;
+const out = document.getElementById('out'); out.width = W; out.height = H;
+const octx = out.getContext('2d');
+const gl = document.createElement('canvas'); gl.width = W; gl.height = H;
+const renderer = new THREE.WebGLRenderer({canvas: gl, antialias: true, preserveDrawingBuffer: true});
+renderer.setSize(W, H, false);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 300);
+
+// ---------- faces (Roblox-ish) ----------
+function faceTexture(expr, skin) {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = skin; x.fillRect(0, 0, 256, 256);
+  x.fillStyle = '#111'; x.strokeStyle = '#111'; x.lineCap = 'round'; x.lineWidth = 14;
+  const eye = (cx, cy, r) => { x.beginPath(); x.ellipse(cx, cy, r * 0.75, r, 0, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#fff'; x.beginPath(); x.arc(cx - r * 0.25, cy - r * 0.35, r * 0.25, 0, Math.PI * 2); x.fill(); x.fillStyle = '#111'; };
+  switch (expr) {
+    case 'happy':
+      eye(88, 105, 24); eye(168, 105, 24);
+      x.beginPath(); x.arc(128, 150, 42, 0.15 * Math.PI, 0.85 * Math.PI); x.stroke(); break;
+    case 'sad':
+      eye(88, 110, 22); eye(168, 110, 22);
+      x.beginPath(); x.arc(128, 215, 40, 1.2 * Math.PI, 1.8 * Math.PI); x.stroke();
+      x.beginPath(); x.moveTo(62, 78); x.lineTo(104, 90); x.moveTo(194, 78); x.lineTo(152, 90); x.stroke(); break;
+    case 'shock':
+      eye(88, 100, 32); eye(168, 100, 32);
+      x.beginPath(); x.ellipse(128, 180, 26, 34, 0, 0, Math.PI * 2); x.fill(); break;
+    case 'angry':
+      eye(88, 112, 22); eye(168, 112, 22);
+      x.beginPath(); x.moveTo(60, 70); x.lineTo(108, 92); x.moveTo(196, 70); x.lineTo(148, 92); x.stroke();
+      x.beginPath(); x.moveTo(92, 190); x.lineTo(164, 190); x.stroke(); break;
+    case 'smirk':
+      eye(88, 105, 22); eye(168, 105, 22);
+      x.beginPath(); x.moveTo(96, 170); x.quadraticCurveTo(140, 200, 176, 160); x.stroke(); break;
+    default: // neutral
+      eye(88, 105, 24); eye(168, 105, 24);
+      x.beginPath(); x.moveTo(100, 172); x.lineTo(156, 172); x.stroke();
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const faceCache = {};
+function face(expr, skin) { const k = expr + skin; if (!faceCache[k]) faceCache[k] = faceTexture(expr, skin); return faceCache[k]; }
+
+const plastic = (color) => new THREE.MeshStandardMaterial({color, roughness: 0.45, metalness: 0.05});
+
+// ---------- blocky character ----------
+function makeCharacter(def) {
+  const g = new THREE.Group();
+  const skin = def.skin || '#f3c892', shirt = def.shirt || '#3b82f6', pants = def.pants || '#1e3a8a', hair = def.hair || '#5b3a1e';
+  const box = (w, h, d, mat) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.castShadow = true; m.receiveShadow = true; return m; };
+
+  const torso = box(2, 2, 1, plastic(shirt)); torso.position.y = 3; g.add(torso);
+  const headG = new THREE.Group(); headG.position.y = 4.65; g.add(headG);
+  const headMats = [plastic(skin), plastic(skin), plastic(skin), plastic(skin),
+    new THREE.MeshStandardMaterial({roughness: 0.45, map: face('neutral', skin)}), plastic(skin)];
+  const head = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.3, 1.3), headMats); head.castShadow = true; headG.add(head);
+  const hairM = box(1.4, 0.3, 1.4, plastic(hair)); hairM.position.y = 0.72; headG.add(hairM);
+  if (def.hat) { const hat = box(1.6, 0.25, 1.6, plastic(def.hat)); hat.position.y = 0.9; headG.add(hat);
+    const top = box(1.0, 0.7, 1.0, plastic(def.hat)); top.position.y = 1.3; headG.add(top); }
+
+  const limb = (mat, x, y) => { const p = new THREE.Group(); p.position.set(x, y, 0);
+    const m = box(1, 2, 1, mat); m.position.y = -1; p.add(m); return p; };
+  const armL = limb(plastic(def.sleeves || shirt), -1.5, 4), armR = limb(plastic(def.sleeves || shirt), 1.5, 4);
+  const legL = limb(plastic(pants), -0.5, 2), legR = limb(plastic(pants), 0.5, 2);
+  g.add(armL, armR, legL, legR);
+  g.userData = {torso, headG, head, headMats, armL, armR, legL, legR, name: def.name, skin};
+  return g;
+}
+
+function setExpr(ch, expr) { const m = ch.userData.headMats[4]; const t = face(expr in {neutral:1,happy:1,sad:1,shock:1,angry:1,smirk:1} ? expr : 'neutral', ch.userData.skin); if (m.map !== t) { m.map = t; m.needsUpdate = true; } }
+
+function pose(ch, kind, t, seed = 0) {
+  const u = ch.userData, s = Math.sin(t * 6 + seed), c = Math.cos(t * 6 + seed);
+  ch.position.y = 0; u.headG.rotation.set(0, 0, 0); u.torso.rotation.set(0, 0, 0);
+  [u.armL, u.armR, u.legL, u.legR].forEach(p => p.rotation.set(0, 0, 0));
+  switch (kind) {
+    case 'walk':
+      u.armL.rotation.x = s * 0.8; u.armR.rotation.x = -s * 0.8;
+      u.legL.rotation.x = -s * 0.8; u.legR.rotation.x = s * 0.8;
+      ch.position.y = Math.abs(s) * 0.12; break;
+    case 'run':
+      u.armL.rotation.x = s * 1.3; u.armR.rotation.x = -s * 1.3;
+      u.legL.rotation.x = -s * 1.3; u.legR.rotation.x = s * 1.3;
+      u.torso.rotation.x = 0.15; u.headG.rotation.x = 0.1; ch.position.y = Math.abs(s) * 0.25; break;
+    case 'wave':
+      u.armR.rotation.z = -2.6 + Math.sin(t * 8) * 0.3; u.armL.rotation.x = 0.1; break;
+    case 'shock':
+      u.armL.rotation.z = 2.4; u.armR.rotation.z = -2.4; u.headG.rotation.x = -0.15;
+      ch.position.y = Math.max(0, Math.sin(t * 9)) * 0.2; break;
+    case 'sad':
+      u.headG.rotation.x = 0.45; u.torso.rotation.x = 0.12; u.armL.rotation.x = 0.1; u.armR.rotation.x = 0.1; break;
+    case 'point':
+      u.armR.rotation.x = -1.5; u.headG.rotation.y = -0.15; break;
+    case 'cross':
+      u.armL.rotation.x = -1.1; u.armL.rotation.y = 0.9; u.armR.rotation.x = -1.1; u.armR.rotation.y = -0.9;
+      u.headG.rotation.x = -0.08; break;
+    case 'cheer':
+      u.armL.rotation.z = 2.8 + c * 0.2; u.armR.rotation.z = -2.8 - c * 0.2; ch.position.y = Math.abs(Math.sin(t * 7)) * 0.4; break;
+    case 'sit':
+      u.legL.rotation.x = -1.5; u.legR.rotation.x = -1.5; ch.position.y = -1.0; u.armL.rotation.x = -0.5; u.armR.rotation.x = -0.5; break;
+    case 'think':
+      u.armR.rotation.x = -1.6; u.armR.rotation.z = -0.9; u.headG.rotation.z = 0.15; u.headG.rotation.y = 0.2; break;
+    default: // idle
+      u.armL.rotation.x = Math.sin(t * 2 + seed) * 0.08; u.armR.rotation.x = -Math.sin(t * 2 + seed) * 0.08;
+      ch.position.y = Math.sin(t * 2.5 + seed) * 0.05; u.headG.rotation.y = Math.sin(t * 0.9 + seed) * 0.12;
+  }
+}
+
+// ---------- environments ----------
+function makeEnv(kind, scene) {
+  const g = new THREE.Group(); scene.add(g);
+  const palettes = {
+    park:   {sky: ['#8fd3ff', '#dff4ff'], ground: '#6cc24a', fog: '#cfeeff'},
+    street: {sky: ['#9bc7ff', '#eef6ff'], ground: '#8a8f99', fog: '#dde8f5'},
+    night:  {sky: ['#0b1437', '#2b2f6b'], ground: '#1f3a2a', fog: '#1a2250'},
+    room:   {sky: ['#f6e7c8', '#fff5df'], ground: '#c99a62', fog: '#f6e7c8'},
+    sunset: {sky: ['#ff8a5c', '#ffd27a'], ground: '#5fae44', fog: '#ffd9a8'},
+    school: {sky: ['#b8dcff', '#f0f8ff'], ground: '#b0b7c3', fog: '#e6f0fb'},
+  };
+  const p = palettes[kind] || palettes.park;
+  // sky gradient as a big sphere interior
+  const sc = document.createElement('canvas'); sc.width = 4; sc.height = 256; const sx = sc.getContext('2d');
+  const gr = sx.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, p.sky[0]); gr.addColorStop(1, p.sky[1]);
+  sx.fillStyle = gr; sx.fillRect(0, 0, 4, 256);
+  const skyT = new THREE.CanvasTexture(sc); skyT.colorSpace = THREE.SRGBColorSpace;
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(150, 24, 16), new THREE.MeshBasicMaterial({map: skyT, side: THREE.BackSide, fog: false}));
+  g.add(sky);
+  scene.fog = new THREE.Fog(p.fog, 40, 140);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), plastic(p.ground));
+  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; g.add(ground);
+
+  const rnd = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+  const block = (w, h, d, col, x, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), plastic(col)); m.position.set(x, h / 2, z); m.castShadow = m.receiveShadow = true; g.add(m); return m; };
+  const tree = (x, z, s = 1) => { block(0.8 * s, 3 * s, 0.8 * s, '#6b4423', x, z); const c = block(3 * s, 3 * s, 3 * s, kind === 'night' ? '#1d6b3a' : '#2fa84f', x, z); c.position.y = 4 * s; };
+  const house = (x, z, col) => { block(7, 5, 6, col, x, z); const r = new THREE.Mesh(new THREE.ConeGeometry(5.5, 3, 4), plastic('#b5412c')); r.position.set(x, 6.5, z); r.rotation.y = Math.PI / 4; r.castShadow = true; g.add(r);
+    const d = block(1.4, 2.4, 0.2, '#4a2f1a', x, z + 3.05); const w1 = block(1.4, 1.2, 0.2, '#bfe9ff', x - 2.2, z + 3.05); w1.position.y = 3; };
+  if (kind === 'park' || kind === 'sunset' || kind === 'night') {
+    for (let i = 0; i < 18; i++) { const a = rnd() * Math.PI * 2, r = 14 + rnd() * 40; tree(Math.cos(a) * r, Math.sin(a) * r - 6, 0.8 + rnd() * 0.8); }
+    block(3, 0.5, 1.2, '#9a6b3a', -5, -6).position.y = 1.0; block(0.3, 1, 0.3, '#5b3a1e', -6, -6); block(0.3, 1, 0.3, '#5b3a1e', -4, -6);
+    const path = new THREE.Mesh(new THREE.PlaneGeometry(5, 200), plastic('#d9c7a0')); path.rotation.x = -Math.PI / 2; path.position.set(4, 0.02, 0); path.receiveShadow = true; g.add(path);
+  }
+  if (kind === 'street' || kind === 'school') {
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(14, 300), plastic('#3b3f47')); road.rotation.x = -Math.PI / 2; road.position.set(0, 0.02, -40); road.receiveShadow = true; g.add(road);
+    for (let i = 0; i < 12; i++) { const m = block(0.6, 0.02, 3, '#f3f3f3', 0, -i * 10 + 20); m.position.y = 0.04; }
+    const cols = ['#f4b942', '#60a5fa', '#f87171', '#a78bfa', '#34d399', '#fb923c'];
+    for (let i = 0; i < 6; i++) { house(-13, -i * 12 + 10, cols[i]); house(13, -i * 12 + 4, cols[(i + 3) % 6]); }
+    for (let i = 0; i < 5; i++) { const l = block(0.3, 7, 0.3, '#333', 8, -i * 18 + 8); const lamp = block(1, 0.6, 1, '#fff7c2', 8, -i * 18 + 8); lamp.position.y = 7.2; }
+  }
+  if (kind === 'room') {
+    block(30, 12, 0.5, '#f7d9a8', 0, -12); block(0.5, 12, 30, '#f2c98f', -15, 0); block(0.5, 12, 30, '#f2c98f', 15, 0);
+    block(6, 1.2, 4, '#7c5cff', 0, -8).position.y = 0.6; block(6, 2.4, 0.5, '#5b3fd6', 0, -10).position.y = 1.8;
+    block(5, 0.2, 2.5, '#9a6b3a', -9, -9).position.y = 2.6; block(0.3, 2.6, 0.3, '#9a6b3a', -11, -9); block(0.3, 2.6, 0.3, '#9a6b3a', -7, -9);
+    block(2.6, 1.6, 0.2, '#222', -9, -9.5).position.y = 3.6;
+    block(4, 3, 0.2, '#bfe9ff', 7, -11.7).position.y = 6;
+    block(8, 0.2, 6, '#e05a5a', 0, 2).position.y = 0.1;
+    scene.fog = null;
+  }
+  return g;
+}
+
+// ---------- story ----------
+const story = window.STORY;
+const scene = new THREE.Scene();
+const hemi = new THREE.HemisphereLight(0xffffff, 0x8899aa, 0.9); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.position.set(20, 40, 25); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, {left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 150});
+scene.add(sun);
+const chars = {};
+for (const [name, def] of Object.entries(story.characters || {})) { const c = makeCharacter({...def, name}); chars[name] = c; scene.add(c); c.visible = false; }
+let envGroup = null, envKind = null;
+
+const sceneStarts = []; let acc = 0;
+for (const s of story.scenes) { sceneStarts.push(acc); acc += s.duration; }
+const total = acc;
+
+function sceneAt(t) { let i = story.scenes.length - 1; while (i > 0 && t < sceneStarts[i]) i--; return [i, t - sceneStarts[i]]; }
+
+const camPresets = {
+  wide:   (f) => [[0, 7, 26], [0, 2.2, 0]],
+  medium: (f) => [[0, 5, 14], [0, 2.6, 0]],
+  close:  (f) => [[0, 5, 8.5], [0, 3.9, 0]],
+  low:    (f) => [[3, 1.5, 12], [0, 2.6, 0]],
+  high:   (f) => [[0, 16, 14], [0, 1.5, 0]],
+  side:   (f) => [[12, 5, 6], [0, 2.8, 0]],
+};
+
+window.RW_total = total;
+window.renderFrame = function (t) {
+  const [i, lt] = sceneAt(t); const s = story.scenes[i];
+  if (s.env !== envKind) { if (envGroup) scene.remove(envGroup); envGroup = makeEnv(s.env, scene); envKind = s.env;
+    if (s.env === 'night') { sun.intensity = 0.6; sun.color.set('#9bb0ff'); hemi.intensity = 0.35; } else if (s.env === 'sunset') { sun.intensity = 2.0; sun.color.set('#ffb070'); hemi.intensity = 0.8; } else { sun.intensity = 2.2; sun.color.set('#ffffff'); hemi.intensity = 0.9; } }
+  for (const c of Object.values(chars)) c.visible = false;
+  let k = 0;
+  for (const a of s.actors || []) {
+    const c = chars[a.name]; if (!c) continue; c.visible = true;
+    const x0 = a.x ?? 0, z0 = a.z ?? 0, x1 = a.toX ?? x0, z1 = a.toZ ?? z0;
+    const f = Math.min(1, lt / s.duration);
+    c.position.x = x0 + (x1 - x0) * f; c.position.z = z0 + (z1 - z0) * f;
+    c.rotation.y = a.rot ?? (x1 !== x0 ? Math.atan2(x1 - x0, z1 - z0) : 0);
+    pose(c, a.pose || 'idle', t, k * 1.7); setExpr(c, a.expr || 'neutral'); k++;
+  }
+  const preset = camPresets[s.cam || 'medium'] || camPresets.medium;
+  const [p, l] = preset(lt / s.duration);
+  const focus = s.focus ? chars[s.focus] : null; const fx = focus ? focus.position.x : (s.camX ?? 0), fz = focus ? focus.position.z : (s.camZ ?? 0);
+  const push = (s.push ?? 0.08) * lt;  // slow push-in per shot
+  camera.position.set(fx + p[0] * (1 - push * 0.05), p[1], fz + p[2] * (1 - push * 0.05));
+  camera.lookAt(fx + l[0], l[1], fz + l[2]);
+  if (s.shake) { camera.position.x += Math.sin(t * 60) * 0.15; camera.position.y += Math.cos(t * 47) * 0.12; }
+  renderer.render(scene, camera);
+
+  // 2D composite: video + captions
+  octx.drawImage(gl, 0, 0);
+  const cap = s.caption || '';
+  if (cap) {
+    const pop = Math.min(1, lt / 0.18); const sc = 0.7 + 0.3 * (1 - Math.pow(1 - pop, 3));
+    octx.save(); octx.translate(W / 2, H * 0.74); octx.scale(sc, sc);
+    const size = cap.length > 10 ? Math.round(W * 0.13) : Math.round(W * 0.17);
+    octx.font = `900 ${size}px "Inter Display", "Inter", sans-serif`; octx.textAlign = 'center'; octx.textBaseline = 'middle';
+    const lines = cap.split('\n');
+    lines.forEach((ln, j) => { const y = (j - (lines.length - 1) / 2) * size * 1.05;
+      octx.lineJoin = 'round'; octx.lineWidth = size * 0.22; octx.strokeStyle = '#000'; octx.strokeText(ln, 0, y);
+      octx.fillStyle = s.capColor || '#fff'; octx.fillText(ln, 0, y); });
+    octx.restore();
+  }
+  if (story.watermark) { octx.font = `700 ${Math.round(W * 0.03)}px "Inter", sans-serif`; octx.textAlign = 'center'; octx.fillStyle = 'rgba(255,255,255,0.7)'; octx.fillText(story.watermark, W / 2, H * 0.93); }
+  if (lt < 0.12) { octx.fillStyle = `rgba(255,255,255,${(0.12 - lt) / 0.12 * 0.25})`; octx.fillRect(0, 0, W, H); } // flash on cut
+  return out.toDataURL('image/jpeg', 0.92);
+};
+window.RW_ready = true;
+</script></body></html>
