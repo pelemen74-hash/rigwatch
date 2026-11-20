@@ -202,7 +202,7 @@ window.RW_total = total;
 window.renderFrame = function (t) {
   const [i, lt] = sceneAt(t); const s = story.scenes[i];
   if (s.env !== envKind) { if (envGroup) scene.remove(envGroup); envGroup = makeEnv(s.env, scene); envKind = s.env;
-    if (s.env === 'night') { sun.intensity = 0.6; sun.color.set('#9bb0ff'); hemi.intensity = 0.35; } else if (s.env === 'sunset') { sun.intensity = 2.0; sun.color.set('#ffb070'); hemi.intensity = 0.8; } else { sun.intensity = 2.2; sun.color.set('#ffffff'); hemi.intensity = 0.9; } }
+    if (s.env === 'night') { sun.intensity = 1.4; sun.color.set('#b8c6ff'); hemi.intensity = 0.9; } else if (s.env === 'sunset') { sun.intensity = 2.0; sun.color.set('#ffb070'); hemi.intensity = 0.8; } else { sun.intensity = 2.2; sun.color.set('#ffffff'); hemi.intensity = 0.9; } }
   for (const c of Object.values(chars)) c.visible = false;
   let k = 0;
   for (const a of s.actors || []) {
