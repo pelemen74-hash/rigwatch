@@ -1,0 +1,29 @@
+{
+  "title": "In this world, you can't lie",
+  "watermark": "",
+  "characters": {
+    "max":  {"skin": "#f3c892", "shirt": "#3b82f6", "pants": "#1e3a8a", "hair": "#2b1b0e"},
+    "lena": {"skin": "#e9b58a", "shirt": "#ec4899", "pants": "#4c1d95", "hair": "#c2410c"},
+    "boss": {"skin": "#d9a978", "shirt": "#111827", "pants": "#111827", "hair": "#555", "hat": "#111827"},
+    "kid":  {"skin": "#f7d3ad", "shirt": "#22c55e", "pants": "#854d0e", "hair": "#facc15"}
+  },
+  "scenes": [
+    {"env": "street", "cam": "wide",   "duration": 2.5, "caption": "IN THIS\nWORLD...", "actors": [{"name": "max", "x": -3, "z": -8, "toX": 0, "toZ": 2, "pose": "walk", "expr": "neutral"}, {"name": "lena", "x": 4, "z": -2, "pose": "idle", "expr": "happy"}]},
+    {"env": "street", "cam": "close",  "duration": 2.5, "caption": "YOU CAN'T\nLIE", "focus": "max", "actors": [{"name": "max", "x": 0, "z": 0, "pose": "idle", "expr": "neutral"}]},
+    {"env": "street", "cam": "medium", "duration": 2.5, "caption": "EVERYONE", "actors": [{"name": "lena", "x": -3, "z": 0, "pose": "point", "expr": "angry", "rot": 1.2}, {"name": "kid", "x": 3, "z": 0, "pose": "idle", "expr": "sad", "rot": -1.2}]},
+    {"env": "street", "cam": "low",    "duration": 2.5, "caption": "SAYS THE\nTRUTH", "actors": [{"name": "boss", "x": 0, "z": 0, "pose": "cross", "expr": "angry"}]},
+    {"env": "school", "cam": "medium", "duration": 2.5, "caption": "\"YOUR HAIR\nIS UGLY\"", "actors": [{"name": "kid", "x": -2.5, "z": 0, "pose": "point", "expr": "smirk", "rot": 1.3}, {"name": "lena", "x": 2.5, "z": 0, "pose": "sad", "expr": "sad", "rot": -1.3}]},
+    {"env": "school", "cam": "close",  "duration": 2.0, "caption": "OUCH", "focus": "lena", "actors": [{"name": "lena", "x": 0, "z": 0, "pose": "sad", "expr": "sad"}], "shake": true},
+    {"env": "room",   "cam": "medium", "duration": 2.5, "caption": "BUT MAX...", "actors": [{"name": "max", "x": 0, "z": 0, "pose": "think", "expr": "neutral"}]},
+    {"env": "room",   "cam": "close",  "duration": 2.5, "caption": "HAD A\nSECRET", "focus": "max", "actors": [{"name": "max", "x": 0, "z": 0, "pose": "idle", "expr": "smirk"}]},
+    {"env": "park",   "cam": "wide",   "duration": 2.5, "caption": "ONE DAY", "actors": [{"name": "lena", "x": -4, "z": 4, "pose": "sit", "expr": "sad", "rot": 0.3}, {"name": "max", "x": 8, "z": -6, "toX": 1, "toZ": 2, "pose": "walk", "expr": "neutral"}]},
+    {"env": "park",   "cam": "medium", "duration": 2.5, "caption": "HE SAID", "actors": [{"name": "lena", "x": -2, "z": 0, "pose": "idle", "expr": "sad", "rot": 1.2}, {"name": "max", "x": 2, "z": 0, "pose": "idle", "expr": "happy", "rot": -1.2}]},
+    {"env": "park",   "cam": "close",  "duration": 3.0, "caption": "\"YOUR HAIR\nIS BEAUTIFUL\"", "focus": "max", "capColor": "#ffe066", "actors": [{"name": "max", "x": 0, "z": 0, "pose": "idle", "expr": "happy"}]},
+    {"env": "park",   "cam": "close",  "duration": 2.5, "caption": "WAIT...", "focus": "lena", "actors": [{"name": "lena", "x": 0, "z": 0, "pose": "shock", "expr": "shock"}], "shake": true},
+    {"env": "park",   "cam": "wide",   "duration": 2.5, "caption": "THAT'S A\nLIE?!", "actors": [{"name": "lena", "x": -2, "z": 0, "pose": "shock", "expr": "shock", "rot": 1.2}, {"name": "max", "x": 2, "z": 0, "pose": "idle", "expr": "smirk", "rot": -1.2}, {"name": "kid", "x": 6, "z": -4, "pose": "shock", "expr": "shock"}]},
+    {"env": "sunset", "cam": "low",    "duration": 2.5, "caption": "THE ONLY ONE", "actors": [{"name": "max", "x": 0, "z": 0, "pose": "idle", "expr": "neutral"}]},
+    {"env": "sunset", "cam": "medium", "duration": 2.5, "caption": "WHO COULD", "actors": [{"name": "max", "x": -2, "z": 0, "pose": "wave", "expr": "happy", "rot": 1.2}, {"name": "lena", "x": 2, "z": 0, "pose": "cheer", "expr": "happy", "rot": -1.2}]},
+    {"env": "sunset", "cam": "close",  "duration": 3.0, "caption": "AND HE USED IT\nFOR KINDNESS", "focus": "max", "capColor": "#ffe066", "actors": [{"name": "max", "x": 0, "z": 0, "pose": "idle", "expr": "happy"}]},
+    {"env": "night",  "cam": "wide",   "duration": 3.0, "caption": "FOLLOW FOR\nPART 2", "actors": [{"name": "max", "x": -2, "z": 0, "pose": "wave", "expr": "happy"}, {"name": "lena", "x": 2, "z": 0, "pose": "cheer", "expr": "happy"}, {"name": "kid", "x": 0, "z": 3, "pose": "cheer", "expr": "happy"}]}
+  ]
+}
